@@ -68,4 +68,10 @@ describe('micro-amd', function () {
       done()
     })
   })
+  it('should allow local requires of loaded modules', function (done) {
+    api.require(['nested/c'], function (b) {
+      expect(b).to.eql('b')
+      done()
+    })
+  })
 })

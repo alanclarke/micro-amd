@@ -12,23 +12,19 @@ module.exports = function (options) {
     deps = deps || []
     if (typeof deps === 'string') {
       if (deps in modules) return modules[deps]
-      throw new Error('not loaded: ' + deps)
+      throw new Error('Module not loaded: ' + deps)
     }
     return all(deps.map(fetch))
-      .then(function apply (args) {
-        return cb.apply(null, args || [])
+      .then(function apply (deps) {
+        return cb.apply(null, deps || [])
       })
       .catch(options.error)
   }
 
   function def (name, deps, cb) {
     if (typeof name !== 'string') return anon.push(arguments)
-    if (!cb) {
-      cb = deps
-      deps = []
-    }
     deps = deps || []
-    return req(deps.map(relativeTo(name)), cb)
+    return localReq(deps, cb)
       .then(function resolveModule (m) {
         modules[name] = m
         if (waiting[name]) {
@@ -36,9 +32,19 @@ module.exports = function (options) {
           delete waiting[name]
         }
       })
+
+    function localReq (deps, cb) {
+      if (typeof deps === 'string') return req(relativeTo(name, deps), cb)
+      return req(deps.map(function (dep) {
+        return dep === 'require'
+          ? localReq
+          : relativeTo(name, dep)
+      }), cb)
+    }
   }
 
   function fetch (name) {
+    if (typeof name !== 'string') return name
     if (name in modules) return modules[name]
     if (waiting[name]) return waiting[name].promise
     waiting[name] = defer()
@@ -58,9 +64,8 @@ module.exports = function (options) {
   return { require: req, define: def }
 }
 
-function relativeTo (entry) {
-  return function (dep) {
-    if (dep.charAt(0) !== '.') return dep
-    return resolvePath(entry.replace(/\/?[^\/]+$/, ''), dep)
-  }
+function relativeTo (entryPoint, dep) {
+  return dep.charAt(0) === '.'
+    ? resolvePath(entryPoint.replace(/\/?[^\/]+$/, ''), dep)
+    : dep
 }
