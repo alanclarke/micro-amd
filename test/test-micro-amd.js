@@ -62,4 +62,10 @@ describe('micro-amd', function () {
     })
     expect(api.require('abc')).to.eql('abc')
   })
+  it('should allow asyncronous requires of loaded modules', function (done) {
+    api.require(['anon'], function (anon) {
+      expect(anon).to.eql('anon1')
+      done()
+    })
+  })
 })
