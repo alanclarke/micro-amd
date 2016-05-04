@@ -56,21 +56,31 @@ describe('micro-amd', function () {
       done()
     })
   })
+
   it('should allow syncronous requires of loaded modules', function () {
     api.define('abc', [], function abc () {
       return 'abc'
     })
     expect(api.require('abc')).to.eql('abc')
   })
+
   it('should allow asyncronous requires of loaded modules', function (done) {
     api.require(['anon'], function (anon) {
       expect(anon).to.eql('anon1')
       done()
     })
   })
+
   it('should allow local requires of loaded modules', function (done) {
     api.require(['nested/c'], function (b) {
       expect(b).to.eql('b')
+      done()
+    })
+  })
+
+  it('should allow object literal syntax', function (done) {
+    api.require(['literal'], function (obj) {
+      expect(obj.literal).to.eql(true)
       done()
     })
   })

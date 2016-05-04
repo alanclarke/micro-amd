@@ -14,24 +14,27 @@ module.exports = function (options) {
       if (deps in modules) return modules[deps]
       throw new Error('Module not loaded: ' + deps)
     }
-    return all(deps.map(fetch))
-      .then(function apply (deps) {
-        return cb.apply(null, deps || [])
-      })
-      .catch(options.error)
+    return all(deps.map(fetch)).then(function apply (deps) {
+      if (typeof cb !== 'function') return cb
+      return cb.apply(null, deps || [])
+    })
+    .catch(options.error)
   }
 
   function def (name, deps, cb) {
     if (typeof name !== 'string') return anon.push(arguments)
+    if (!cb) {
+      cb = deps
+      deps = []
+    }
     deps = deps || []
-    return localReq(deps, cb)
-      .then(function resolveModule (m) {
-        modules[name] = m
-        if (waiting[name]) {
-          waiting[name].resolve(m)
-          delete waiting[name]
-        }
-      })
+    return localReq(deps, cb).then(function resolveModule (m) {
+      modules[name] = m
+      if (waiting[name]) {
+        waiting[name].resolve(m)
+        delete waiting[name]
+      }
+    })
 
     function localReq (deps, cb) {
       if (typeof deps === 'string') return req(relativeTo(name, deps), cb)

@@ -1,0 +1,3 @@
+window.define({
+  literal: true
+})
