@@ -1,5 +1,5 @@
-var promise = require('sync-p')
 var all = require('sync-p/all')
+var defer = require('sync-p/defer')
 var loadScript = require('./lib/load-script')
 var resolvePath = require('./lib/resolve-path')
 
@@ -31,27 +31,28 @@ module.exports = function (options) {
     return req(deps.map(relativeTo(name)), cb)
       .then(function resolveModule (m) {
         modules[name] = m
-        if (waiting[name]) while (waiting[name].length) waiting[name].pop()(m)
+        if (waiting[name]) {
+          waiting[name].resolve(m)
+          delete waiting[name]
+        }
       })
   }
 
   function fetch (name) {
     if (name in modules) return modules[name]
-    return promise(function resolver (resolve, reject) {
-      if (waiting[name]) return waiting[name].push(resolve)
-      waiting[name] = [resolve]
-      // defer external lookup as may not need it
-      setTimeout(function lookup () {
-        if (name in modules) return
-        loadScript(resolvePath(options.base, name) + '.js', function (err) {
-          if (err) return reject(err)
-          if (!(name in modules) && anon.length) {
-            var anonModule = anon.pop()
-            return def(name, anonModule[0], anonModule[1])
-          }
-        })
-      }, 0)
-    })
+    if (waiting[name]) return waiting[name].promise
+    waiting[name] = defer()
+    setTimeout(function lookup () {
+      if (name in modules) return
+      loadScript(resolvePath(options.base, name) + '.js', function (err) {
+        if (err) return waiting[name].reject(err)
+        if (!(name in modules) && anon.length) {
+          var anonModule = anon.pop()
+          return def(name, anonModule[0], anonModule[1])
+        }
+      })
+    }, 0)
+    return waiting[name].promise
   }
 
   return { require: req, define: def }
