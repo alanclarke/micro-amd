@@ -1,3 +1,3 @@
-window.register(['./1'], function (one) {
+window.define(['./1'], function (one) {
   return 'anon' + one
 })

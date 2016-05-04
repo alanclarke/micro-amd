@@ -1,3 +1,3 @@
-window.register('nested/internal/b', [], function () {
+window.define('nested/internal/b', [], function () {
   return 'b'
 })

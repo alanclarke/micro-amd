@@ -6,10 +6,10 @@ describe('micro-amd', function () {
   var api
   beforeEach(function () {
     api = amd({ base: '/base/test/fixtures' })
-    window.register = api.register
+    window.define = api.define
   })
   afterEach(function () {
-    delete window.register
+    delete window.define
   })
 
   it('should allow you to require a module', function (done) {
@@ -48,7 +48,7 @@ describe('micro-amd', function () {
   })
 
   it('should allow you to dynamically register arbitrary modules', function (done) {
-    api.register('abc', [], function () {
+    api.define('abc', [], function () {
       return 'abc'
     })
     api.require(['abc'], function (m) {
@@ -57,7 +57,7 @@ describe('micro-amd', function () {
     })
   })
   it('should allow syncronous requires of loaded modules', function () {
-    api.register('abc', [], function abc () {
+    api.define('abc', [], function abc () {
       return 'abc'
     })
     expect(api.require('abc')).to.eql('abc')

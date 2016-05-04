@@ -8,7 +8,7 @@ module.exports = function (options) {
   var waiting = {}
   var anon = []
 
-  function require (deps, cb) {
+  function req (deps, cb) {
     deps = deps || []
     if (typeof deps === 'string') {
       if (deps in modules) return modules[deps]
@@ -21,10 +21,14 @@ module.exports = function (options) {
       .catch(options.error)
   }
 
-  function register (name, deps, cb) {
+  function def (name, deps, cb) {
     if (typeof name !== 'string') return anon.push(arguments)
+    if (!cb) {
+      cb = deps
+      deps = []
+    }
     deps = deps || []
-    return require(deps.map(relativeTo(name)), cb)
+    return req(deps.map(relativeTo(name)), cb)
       .then(function resolveModule (m) {
         modules[name] = m
         if (waiting[name]) while (waiting[name].length) waiting[name].pop()(m)
@@ -43,14 +47,14 @@ module.exports = function (options) {
           if (err) return reject(err)
           if (!(name in modules) && anon.length) {
             var anonModule = anon.pop()
-            return register(name, anonModule[0], anonModule[1])
+            return def(name, anonModule[0], anonModule[1])
           }
         })
       }, 0)
     })
   }
 
-  return { require: require, register: register }
+  return { require: req, define: def }
 }
 
 function relativeTo (entry) {

@@ -1,3 +1,3 @@
-window.register('1', [], function () {
+window.define('1', [], function () {
   return 1
 })
