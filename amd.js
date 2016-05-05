@@ -1,5 +1,5 @@
+var promise = require('sync-p')
 var all = require('sync-p/all')
-var defer = require('sync-p/defer')
 var loadScript = require('./lib/load-script')
 var resolvePath = require('./lib/resolve-path')
 
@@ -29,46 +29,48 @@ module.exports = function (options) {
       deps = []
     }
     deps = deps || []
-    return localReq(deps, cb).then(register)
+    waiting[name] = reqLocal(deps, cb).then(register)
+    return waiting[name]
 
-    function localReq (deps, cb) {
+    function reqLocal (deps, cb) {
       if (typeof deps === 'string') return req(relativeTo(name, deps))
       return req(deps.map(localizeDep), cb)
     }
 
     function localizeDep (dep) {
       return dep === 'require'
-      ? localReq
+      ? reqLocal
       : relativeTo(name, dep)
     }
 
     function register (m) {
       modules[name] = m
-      if (waiting[name]) {
-        waiting[name].resolve(m)
-        delete waiting[name]
-      }
+      delete waiting[name]
+      return m
     }
   }
 
   function fetch (name) {
     if (typeof name !== 'string') return name
     if (name in modules) return modules[name]
-    if (waiting[name]) return waiting[name].promise
-    waiting[name] = defer()
-    setTimeout(function lookup () {
-      if (name in modules) return
-      loadScript(resolvePath(options.base, name) + '.js', function (err) {
-        if (err) return waiting[name].reject(err)
-        if (!(name in modules)) {
+    if (waiting[name]) return waiting[name]
+    // need to fetch
+    return promise(function (resolve, reject) {
+      setTimeout(function lookup () {
+        if (name in modules) return resolve(modules[name])
+        if (waiting[name]) return resolve(waiting[name])
+        loadScript(resolvePath(options.base, name) + '.js', function (err) {
+          if (err) return reject(err)
+          if (name in modules) return resolve(modules[name])
+          if (waiting[name]) return resolve(waiting[name])
           if (anon.length) {
             var anonModule = anon.pop()
-            return def(name, anonModule[0], anonModule[1])
+            return resolve(def(name, anonModule[0], anonModule[1]))
           }
-        }
-      })
-    }, 0)
-    return waiting[name].promise
+          return resolve(def(name))
+        })
+      }, 0)
+    })
   }
 
   function fetchAll (deps) {
