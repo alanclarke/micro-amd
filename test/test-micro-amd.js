@@ -64,13 +64,6 @@ describe('micro-amd', function () {
     expect(api.require('abc')).to.eql('abc')
   })
 
-  it('should allow asyncronous requires of loaded modules', function (done) {
-    api.require(['anon'], function (anon) {
-      expect(anon).to.eql('anon1')
-      done()
-    })
-  })
-
   it('should allow local requires of loaded modules', function (done) {
     api.require(['nested/c'], function (b) {
       expect(b).to.eql('b')
@@ -78,9 +71,24 @@ describe('micro-amd', function () {
     })
   })
 
+  it('should allow asyncronous requires of anonymous modules', function (done) {
+    api.require(['anon'], function (anon) {
+      expect(anon).to.eql('anon1')
+      done()
+    })
+  })
+
   it('should allow object literal syntax', function (done) {
     api.require(['literal'], function (obj) {
       expect(obj.literal).to.eql(true)
+      done()
+    })
+  })
+
+  it('should allow modules that dont register', function (done) {
+    api.require(['non-registering'], function (m) {
+      expect(m).to.eql(undefined)
+      expect(window.nonRegistering).to.eql(true)
       done()
     })
   })
