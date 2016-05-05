@@ -51,18 +51,14 @@ module.exports = function (options) {
   }
 
   function fetch (name) {
-    if (typeof name !== 'string') return name
-    if (name in modules) return modules[name]
-    if (waiting[name]) return waiting[name]
-    // need to fetch
     return promise(function (resolve, reject) {
+      if (typeof name !== 'string') return resolve(name)
+      if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
       setTimeout(function lookup () {
-        if (name in modules) return resolve(modules[name])
-        if (waiting[name]) return resolve(waiting[name])
+        if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
         loadScript(path(options.base, name) + '.js', function (err) {
           if (err) return reject(err)
-          if (name in modules) return resolve(modules[name])
-          if (waiting[name]) return resolve(waiting[name])
+          if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
           if (anon.length) {
             var anonModule = anon.pop()
             return resolve(def(name, anonModule[0], anonModule[1]))
