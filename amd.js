@@ -14,11 +14,12 @@ module.exports = function (options) {
       if (deps in modules) return modules[deps]
       throw new Error('Module not loaded: ' + deps)
     }
-    return all(deps.map(fetch)).then(function apply (deps) {
+    return fetchAll(deps).then(evaluate).catch(options.error)
+
+    function evaluate (deps) {
       if (typeof cb !== 'function') return cb
       return cb.apply(null, deps || [])
-    })
-    .catch(options.error)
+    }
   }
 
   function def (name, deps, cb) {
@@ -28,21 +29,25 @@ module.exports = function (options) {
       deps = []
     }
     deps = deps || []
-    return localReq(deps, cb).then(function resolveModule (m) {
+    return localReq(deps, cb).then(register)
+
+    function localReq (deps, cb) {
+      if (typeof deps === 'string') return req(relativeTo(name, deps))
+      return req(deps.map(localizeDep), cb)
+    }
+
+    function localizeDep (dep) {
+      return dep === 'require'
+      ? localReq
+      : relativeTo(name, dep)
+    }
+
+    function register (m) {
       modules[name] = m
       if (waiting[name]) {
         waiting[name].resolve(m)
         delete waiting[name]
       }
-    })
-
-    function localReq (deps, cb) {
-      if (typeof deps === 'string') return req(relativeTo(name, deps), cb)
-      return req(deps.map(function (dep) {
-        return dep === 'require'
-          ? localReq
-          : relativeTo(name, dep)
-      }), cb)
     }
   }
 
@@ -55,13 +60,19 @@ module.exports = function (options) {
       if (name in modules) return
       loadScript(resolvePath(options.base, name) + '.js', function (err) {
         if (err) return waiting[name].reject(err)
-        if (!(name in modules) && anon.length) {
-          var anonModule = anon.pop()
-          return def(name, anonModule[0], anonModule[1])
+        if (!(name in modules)) {
+          if (anon.length) {
+            var anonModule = anon.pop()
+            return def(name, anonModule[0], anonModule[1])
+          }
         }
       })
     }, 0)
     return waiting[name].promise
+  }
+
+  function fetchAll (deps) {
+    return all(deps.map(fetch))
   }
 
   return { require: req, define: def }
