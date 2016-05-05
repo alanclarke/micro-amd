@@ -1,7 +1,7 @@
 var promise = require('sync-p')
 var all = require('sync-p/all')
 var loadScript = require('./lib/load-script')
-var resolvePath = require('./lib/resolve-path')
+var path = require('./lib/path')
 
 module.exports = function (options) {
   var modules = {}
@@ -33,14 +33,14 @@ module.exports = function (options) {
     return waiting[name]
 
     function reqLocal (deps, cb) {
-      if (typeof deps === 'string') return req(relativeTo(name, deps))
+      if (typeof deps === 'string') return req(path(name, deps))
       return req(deps.map(localizeDep), cb)
     }
 
     function localizeDep (dep) {
       return dep === 'require'
-      ? reqLocal
-      : relativeTo(name, dep)
+        ? reqLocal
+        : path(name, dep)
     }
 
     function register (m) {
@@ -59,7 +59,7 @@ module.exports = function (options) {
       setTimeout(function lookup () {
         if (name in modules) return resolve(modules[name])
         if (waiting[name]) return resolve(waiting[name])
-        loadScript(resolvePath(options.base, name) + '.js', function (err) {
+        loadScript(path(options.base, name) + '.js', function (err) {
           if (err) return reject(err)
           if (name in modules) return resolve(modules[name])
           if (waiting[name]) return resolve(waiting[name])
@@ -78,10 +78,4 @@ module.exports = function (options) {
   }
 
   return { require: req, define: def }
-}
-
-function relativeTo (entryPoint, dep) {
-  return dep.charAt(0) === '.'
-    ? resolvePath(entryPoint.replace(/\/?[^\/]+$/, ''), dep)
-    : dep
 }

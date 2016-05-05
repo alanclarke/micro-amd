@@ -5,7 +5,7 @@ var amd = require('../amd')
 describe('micro-amd', function () {
   var api
   beforeEach(function () {
-    api = amd({ base: '/base/test/fixtures' })
+    api = amd({ base: '/base/test/fixtures/' })
     window.define = api.define
   })
   afterEach(function () {
