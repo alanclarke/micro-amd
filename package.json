@@ -33,6 +33,7 @@
     "webpack": "^1.12.14"
   },
   "dependencies": {
+    "fetch-js": "^1.0.2",
     "sync-p": "^1.1.1"
   }
 }

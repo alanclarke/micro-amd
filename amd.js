@@ -1,7 +1,8 @@
 var promise = require('sync-p')
 var all = require('sync-p/all')
-var loadScript = require('./lib/load-script')
+var fetchJs = require('fetch-js')
 var path = require('./lib/path')
+var map = require('./lib/map')
 
 module.exports = function (options) {
   var modules = {}
@@ -14,7 +15,7 @@ module.exports = function (options) {
       if (deps in modules) return modules[deps]
       throw new Error('Module not loaded: ' + deps)
     }
-    return fetchAll(deps).then(evaluate).catch(options.error)
+    return all(map(deps, fetch)).then(evaluate).catch(options.error)
 
     function evaluate (deps) {
       if (typeof cb !== 'function') return cb
@@ -34,7 +35,7 @@ module.exports = function (options) {
 
     function reqLocal (deps, cb) {
       if (typeof deps === 'string') return req(path(name, deps, true))
-      return req(deps.map(localizeDep), cb)
+      return req(map(deps, localizeDep), cb)
     }
 
     function localizeDep (dep) {
@@ -56,7 +57,7 @@ module.exports = function (options) {
       if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
       setTimeout(function lookup () {
         if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
-        loadScript(path(options.base, name) + '.js', function (err) {
+        fetchJs(path(options.base, name) + '.js', function (err) {
           if (err) return reject(err)
           if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
           if (anon.length) {
@@ -68,10 +69,5 @@ module.exports = function (options) {
       }, 0)
     })
   }
-
-  function fetchAll (deps) {
-    return all(deps.map(fetch))
-  }
-
   return { require: req, define: def }
 }
