@@ -2,12 +2,12 @@
 
 A tiny amd loader with the following features
 
-
 - asynchronous module fetching
 - synchronous requires for preloaded modules
 - dependency/nested dependency & relative dependency resolution
 - synchronous named module registration
 - asynchronous anonymous module resolution
+- asynchronous non-registering modules
 - local synchronous requires
 - object literals
 - optional base path
@@ -15,22 +15,23 @@ A tiny amd loader with the following features
 
 ## usage
 ```js
-var AMD = require('micro-amd')
-var amd = amd({ base: 'http://example.com' })
+var amd = require('micro-amd')
+var api = amd({ base: 'http://example.com' })
 
-amd.require(['module-a', 'module-a/lib/helper'], function callback (a, helper) {
+amd.require(['require', 'module-a', 'module-a/lib/helper'], function callback (require) {
   // do stuff
 })
 
-amd.register('noop', [], function callback () {
+amd.define('noop', [], function callback () {
   return function noop () {}
 })
+
+var noop = require('noop')
+// noop()
 
 amd.require(['noop'], function callback (noop) {
   // noop()
 })
-
-var noop = require('noop')
 
 ```
 

@@ -69,5 +69,6 @@ module.exports = function (options) {
       }, 0)
     })
   }
+
   return { require: req, define: def }
 }
