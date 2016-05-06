@@ -92,4 +92,11 @@ describe('micro-amd', function () {
       done()
     })
   })
+
+  it('should allow a medly of localized requires', function (done) {
+    api.require(['nested/d'], function (m) {
+      expect(m).to.eql(3)
+      done()
+    })
+  })
 })

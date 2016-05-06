@@ -33,14 +33,14 @@ module.exports = function (options) {
     return waiting[name]
 
     function reqLocal (deps, cb) {
-      if (typeof deps === 'string') return req(path(name, deps))
+      if (typeof deps === 'string') return req(path(name, deps, true))
       return req(deps.map(localizeDep), cb)
     }
 
     function localizeDep (dep) {
       return dep === 'require'
         ? reqLocal
-        : path(name, dep)
+        : path(name, dep, true)
     }
 
     function register (m) {
