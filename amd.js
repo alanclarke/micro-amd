@@ -19,8 +19,7 @@ module.exports = function (options) {
     return all(map(deps, fetch)).then(evaluate).catch(options.error)
 
     function evaluate (deps) {
-      if (typeof cb !== 'function') return cb
-      return cb.apply(null, deps || [])
+      return typeof cb === 'function' ? cb.apply(null, deps || []) : cb
     }
   }
 
@@ -35,14 +34,9 @@ module.exports = function (options) {
     return waiting[name]
 
     function reqLocal (deps, cb) {
-      if (typeof deps === 'string') return req(path(name, deps, true))
-      return req(map(deps, localizeDep), cb)
-    }
-
-    function localizeDep (dep) {
-      return dep === 'require'
-        ? reqLocal
-        : path(name, dep, true)
+      return typeof deps === 'string'
+        ? req(path(name, deps, true))
+        : req(map(deps, localize), cb)
     }
 
     function register (m) {
@@ -50,15 +44,19 @@ module.exports = function (options) {
       delete waiting[name]
       return m
     }
+
+    function localize (dep) {
+      return dep === 'require' ? reqLocal : path(name, dep, true)
+    }
   }
 
   function fetch (name) {
+    if (typeof name !== 'string') return name
+    if (waiting[name] || name in modules) return waiting[name] || modules[name]
     return promise(function (resolve, reject) {
-      if (typeof name !== 'string') return resolve(name)
-      if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
       setTimeout(function lookup () {
         if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
-        fetchJs(path(options.base, name) + '.js', function (err) {
+        fetchJs(path(options.base, name), function (err) {
           if (err) return reject(err)
           if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
           if (anon.length) {
