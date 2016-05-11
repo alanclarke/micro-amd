@@ -8,7 +8,7 @@ module.exports = function (options) {
   options = options || {}
   var modules = {}
   var waiting = {}
-  var anon = []
+  var anons = []
 
   function req (deps, cb) {
     deps = deps || []
@@ -16,7 +16,7 @@ module.exports = function (options) {
       if (deps in modules) return modules[deps]
       throw new Error('Module not loaded: ' + deps)
     }
-    return all(map(deps, fetch)).then(evaluate).catch(options.error)
+    return all(map(deps, fetch)).then(evaluate)
 
     function evaluate (deps) {
       return typeof cb === 'function' ? cb.apply(null, deps || []) : cb
@@ -24,7 +24,7 @@ module.exports = function (options) {
   }
 
   function def (name, deps, cb) {
-    if (typeof name !== 'string') return anon.push(arguments)
+    if (typeof name !== 'string') return anons.push(arguments)
     if (!cb) {
       cb = deps
       deps = []
@@ -59,8 +59,8 @@ module.exports = function (options) {
         fetchJs(path(options.base, name), function (err) {
           if (err) return reject(err)
           if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
-          if (anon.length) {
-            var args = anon.pop()
+          if (anons.length) {
+            var args = anons.pop()
             return resolve(def(name, args[0], args[1]))
           }
           return resolve(def(name))
