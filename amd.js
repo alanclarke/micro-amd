@@ -5,6 +5,7 @@ var path = require('./lib/path')
 var map = require('./lib/map')
 
 module.exports = function (options) {
+  options = options || {}
   var modules = {}
   var waiting = {}
   var anon = []
