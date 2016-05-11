@@ -60,8 +60,8 @@ module.exports = function (options) {
           if (err) return reject(err)
           if (waiting[name] || name in modules) return resolve(waiting[name] || modules[name])
           if (anon.length) {
-            var anonModule = anon.pop()
-            return resolve(def(name, anonModule[0], anonModule[1]))
+            var args = anon.pop()
+            return resolve(def(name, args[0], args[1]))
           }
           return resolve(def(name))
         })
