@@ -10,20 +10,20 @@ module.exports = function (options) {
   var waiting = {}
   var anons = []
 
-  function req (deps, cb) {
+  function req (deps, cb, fail) {
     deps = deps || []
     if (typeof deps === 'string') {
       if (deps in modules) return modules[deps]
       throw new Error('Module not loaded: ' + deps)
     }
-    return all(map(deps, fetch)).then(evaluate)
+    return all(map(deps, fetch)).then(evaluate).catch(fail)
 
     function evaluate (deps) {
       return typeof cb === 'function' ? cb.apply(null, deps || []) : cb
     }
   }
 
-  function def (name, deps, cb) {
+  function def (name, deps, cb, fail) {
     if (typeof name !== 'string') return anons.push(arguments)
     if (!cb) {
       cb = deps
@@ -31,7 +31,7 @@ module.exports = function (options) {
     }
     deps = deps || []
     waiting[name] = reqLocal(deps, cb).then(register)
-    return waiting[name]
+    return waiting[name].catch(fail)
 
     function reqLocal (deps, cb) {
       return typeof deps === 'string'
