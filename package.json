@@ -1,6 +1,6 @@
 {
   "name": "micro-amd",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A tiny amd lib",
   "main": "index.js",
   "directories": {
