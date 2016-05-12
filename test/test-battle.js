@@ -1,5 +1,6 @@
 /* globals describe beforeEach afterEach it */
 var expect = require('chai').expect
+var all = require('sync-p/all')
 var amd = require('../index')
 
 describe('battle test', function () {
@@ -25,7 +26,7 @@ describe('battle test', function () {
         test(x + '-global', glob)
       ].sort(function () { return Math.random() - 0.5 }))
     }
-    return Promise.all(reqs)
+    return all(reqs)
   })
 
   function id (name, val) {
@@ -41,11 +42,8 @@ describe('battle test', function () {
   }
 
   function test (name, getValue) {
-    return new Promise(function (resolve, reject) {
-      api.require([name], function (val) {
-        expect(getValue(name, val)).to.eql(name)
-      })
-      .then(resolve, reject)
+    return api.require([name], function (val) {
+      expect(getValue(name, val)).to.eql(name)
     })
   }
 })
