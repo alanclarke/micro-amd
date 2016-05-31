@@ -90,4 +90,11 @@ describe('micro-amd', function () {
       expect(m).to.eql(3)
     })
   })
+
+  it('should allow cjs', function () {
+    return api.require(['cjs1', 'cjs2'], function (m1, m2) {
+      expect(m1).to.eql({ value: 'cjs' })
+      expect(m2).to.eql('cjs')
+    })
+  })
 })

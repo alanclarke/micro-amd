@@ -11,15 +11,21 @@ module.exports = function (options) {
   var anons = []
 
   function req (deps, cb, fail) {
-    deps = deps || []
     if (typeof deps === 'string') {
       if (deps in modules) return modules[deps]
       throw new Error('Module not loaded: ' + deps)
     }
-    return all(map(deps, fetch)).then(evaluate).catch(fail)
+    return all(map(deps || [], fetch)).then(evaluate).catch(fail)
 
     function evaluate (deps) {
-      return typeof cb === 'function' ? cb.apply(null, deps || []) : cb
+      if (typeof cb !== 'function') return cb
+      var m = { exports: {} }
+      var ret = cb.apply(null, map(deps, function (dep) {
+        if (dep === 'exports') return m.exports
+        if (dep === 'module') return m
+        return dep
+      }))
+      return typeof ret === 'undefined' ? m.exports : ret
     }
   }
 
@@ -27,9 +33,9 @@ module.exports = function (options) {
     if (typeof name !== 'string') return anons.push(arguments)
     if (!cb) {
       cb = deps
-      deps = []
+      deps = false
     }
-    deps = deps || []
+    if (!deps) deps = (cb && cb.length > 1) ? ['require', 'exports', 'module'] : []
     waiting[name] = reqLocal(deps, cb).then(register)
     return waiting[name].catch(fail)
 
@@ -52,6 +58,7 @@ module.exports = function (options) {
 
   function fetch (name) {
     if (typeof name !== 'string') return name
+    if (name === 'exports' || name === 'module') return name
     if (waiting[name] || name in modules) return waiting[name] || modules[name]
     return promise(function (resolve, reject) {
       setTimeout(function lookup () {
