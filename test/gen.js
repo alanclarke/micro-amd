@@ -1,7 +1,10 @@
 var path = require('path')
 var fs = require('fs')
+var mkdirp = require('mkdirp')
 
 var x = 100
+
+mkdirp.sync(path.join(__dirname, 'fixtures/battle'))
 
 while (x--) {
   fs.writeFile(path.join(__dirname, 'fixtures/battle', x + '-anon.js'), anon(x), noop)
