@@ -15,7 +15,7 @@ module.exports = function (options) {
       if (deps in modules) return modules[deps]
       throw new Error('Module not loaded: ' + deps)
     }
-    return all(map(deps || [], fetch)).then(evaluate).catch(fail)
+    return all(map(deps || [], fetch)).then(evaluate)['catch'](fail)
 
     function evaluate (deps) {
       if (typeof cb !== 'function') return cb
@@ -37,7 +37,7 @@ module.exports = function (options) {
     }
     if (!deps) deps = (cb && cb.length > 1) ? ['require', 'exports', 'module'] : []
     waiting[name] = reqLocal(deps, cb).then(register)
-    return waiting[name].catch(fail)
+    return waiting[name]['catch'](fail)
 
     function reqLocal (deps, cb) {
       return typeof deps === 'string'
