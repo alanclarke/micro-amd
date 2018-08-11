@@ -4,6 +4,7 @@
   "description": "A tiny amd lib",
   "main": "index.js",
   "directories": {
+    "lib": "lib",
     "test": "test"
   },
   "scripts": {
